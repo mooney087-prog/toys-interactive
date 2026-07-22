@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#4b59d8"><title>Toys Interactive English Game</title><link rel="stylesheet" href="style.css"></head><body><main id="app">
+<section id="home" class="screen active"><div class="home-wrap"><div class="cover"><img src="assets/toys-worksheet.png" alt="Toys worksheet"><div class="copy"><span class="badge">Learn • Play • Grow!</span><h1>Toys Interactive English Game</h1><p>เกมภาษาอังกฤษเรื่อง Toys แบบ Interactive</p><button id="startBtn" class="primary big">▶ Start Game</button></div></div><div class="name-card"><label>Name<input id="studentName" placeholder="Your name"></label><label>Class<input id="studentClass" placeholder="P.1 / P.2 / P.3"></label></div><footer>Created by Wongduen</footer></div></section>
+<section id="menu" class="screen"><header class="topbar"><button id="homeBtn">🏠</button><div><h2>Toys Mission Map</h2><small id="studentLabel">Player</small></div><div class="score">⭐ <b id="totalScore">0</b></div></header><div class="mission-grid">
+<button class="mission green" data-stage="vocab"><span>🧩</span><b>Vocabulary Match</b><small>จับคู่ภาพกับคำศัพท์</small></button>
+<button class="mission blue" data-stage="listen"><span>🎧</span><b>Listening Challenge</b><small>ฟังแล้วเลือกภาพ</small></button>
+<button class="mission purple" data-stage="read"><span>📖</span><b>Read & Choose</b><small>อ่านคำใบ้แล้วเลือกคำตอบ</small></button>
+<button class="mission orange" data-stage="grammar"><span>👉</span><b>This or That?</b><small>เลือก This is / That is</small></button>
+<button class="mission pink" data-stage="speak"><span>🎤</span><b>Speak & Ask</b><small>ฝึกพูดถาม-ตอบ</small></button>
+<button class="mission cyan" data-stage="create"><span>🎨</span><b>Create & Draw</b><small>วาดของเล่นที่ชอบ</small></button>
+</div><div class="progress"><h3>Your Progress</h3><div id="badges"></div></div></section>
+<section id="game" class="screen"><header class="topbar"><button id="backBtn">⬅️</button><div><h2 id="stageTitle"></h2><small id="stageSub"></small></div><div class="score">⭐ <b id="stageScore">0</b></div></header><section id="stageArea" class="stage-area"></section></section>
+<dialog id="result"><div class="trophy">🏆</div><h2>Great job!</h2><p id="resultText"></p><button id="nextBtn" class="primary">Next Mission</button><button id="mapBtn">Mission Map</button></dialog>
+</main><script src="app.js"></script></body></html>
