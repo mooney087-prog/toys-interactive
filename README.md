@@ -1,11 +1,17 @@
-# Toys Interactive English Game
+# Toys: Four Skills Adventure
 
-Interactive web game based on the Toys worksheet.
+เกม Interactive จากใบงาน Toys โดยใช้ภาพการ์ตูนที่ตัดจากใบงานต้นฉบับ ไม่ใช้ emoji เป็นภาพคำศัพท์หลัก
 
-Vocabulary: teddy bear, car, doll, robot, puzzle, ball, train, kite.
+## 4 ภารกิจ
+1. Speaking: ระบบออกเสียงคำศัพท์ 8 คำ และนักเรียนออกเสียงตาม
+2. Listening: ระบบพูดประโยค เช่น “This is a teddy bear.” แล้วนักเรียนเลือกภาพการ์ตูน
+3. Reading: เรื่องสั้น 5 ประโยค มีเสียงอ่านและคำอธิบายภาษาไทยทุกประโยค
+4. Writing: เติมคำศัพท์ที่ขาดหายไปในประโยค
 
-Activities: Vocabulary Match, Listening Challenge, Read & Choose, This or That, Speak & Ask, Create & Draw.
+## คำศัพท์
+teddy bear, car, doll, robot, puzzle, ball, train, kite
 
-Open with VS Code Live Server or upload all files to GitHub Pages. Chrome is recommended for sound and microphone features.
+## วิธีใช้
+เปิดด้วย Chrome ผ่าน GitHub Pages หรือ VS Code Live Server เพื่อให้เสียงและไมโครโฟนทำงานได้ดี
 
 Created by Wongduen

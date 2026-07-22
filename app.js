@@ -1,19 +1,171 @@
-const $=s=>document.querySelector(s),screens=[...document.querySelectorAll('.screen')];
-const toys=[{w:'teddy bear',th:'ตุ๊กตาหมี',e:'🧸'},{w:'car',th:'รถของเล่น',e:'🚗'},{w:'doll',th:'ตุ๊กตา',e:'🪆'},{w:'robot',th:'หุ่นยนต์',e:'🤖'},{w:'puzzle',th:'เกมต่อภาพ',e:'🧩'},{w:'ball',th:'ลูกบอล',e:'🏐'},{w:'train',th:'รถไฟของเล่น',e:'🚂'},{w:'kite',th:'ว่าว',e:'🪁'}];
-const stages=['vocab','listen','read','grammar','speak','create'];let total=0,stageScore=0,current='vocab',done=new Set();
-function show(id){screens.forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
-function speak(t,r=.82){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=r;u.pitch=1.05;speechSynthesis.speak(u)}
-function beep(ok=true){const ac=window._ac||(window._ac=new (window.AudioContext||window.webkitAudioContext)());const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=ok?720:190;o.type=ok?'sine':'sawtooth';g.gain.value=.12;o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.25);o.stop(ac.currentTime+.25)}
-function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
-function add(n){stageScore+=n;total+=n;$('#stageScore').textContent=stageScore}
-function finish(t){done.add(current);$('#resultText').textContent=t;$('#result').showModal()}
-function label(s){return({vocab:'Vocabulary',listen:'Listening',read:'Reading',grammar:'Grammar',speak:'Speaking',create:'Create & Draw'})[s]}
-function menu(){show('#menu');$('#studentLabel').textContent=$('#studentName').value.trim()||'Player';$('#totalScore').textContent=total;$('#badges').innerHTML=stages.map((s,i)=>`<span class="${done.has(s)?'done':''}">${i+1}. ${label(s)}</span>`).join('')}
-$('#startBtn').onclick=menu;$('#homeBtn').onclick=()=>show('#home');$('#backBtn').onclick=menu;$('#mapBtn').onclick=()=>{$('#result').close();menu()};$('#nextBtn').onclick=()=>{$('#result').close();const i=stages.indexOf(current);i<5?start(stages[i+1]):menu()};document.querySelectorAll('.mission').forEach(b=>b.onclick=()=>start(b.dataset.stage));
-function start(s){current=s;stageScore=0;$('#stageScore').textContent=0;const map={vocab:['Vocabulary Match','จับคู่ภาพกับคำศัพท์'],listen:['Listening Challenge','ฟังแล้วเลือกภาพ'],read:['Read & Choose','อ่านคำใบ้แล้วเลือกคำตอบ'],grammar:['This or That?','เลือก This is / That is'],speak:['Speak & Ask','ฝึกพูดถาม-ตอบ'],create:['Create & Draw','วาดของเล่นที่ชอบ']};$('#stageTitle').textContent=map[s][0];$('#stageSub').textContent=map[s][1];show('#game');({vocab,listen,read,grammar,speakStage,create})[s]()}
-function vocab(){let selected=null,count=0;$('#stageArea').innerHTML='<div class="panel"><p class="instruction">Match each word with the correct picture.</p><div id="bank" class="word-bank"></div><div id="pics" class="grid"></div></div>';shuffle(toys).forEach(t=>{const b=document.createElement('button');b.textContent=t.w;b.onclick=()=>{selected=t.w;speak(t.w)};$('#bank').appendChild(b)});shuffle(toys).forEach(t=>{const c=document.createElement('button');c.className='toy';c.innerHTML=`<span class="emoji">${t.e}</span>`;c.onclick=()=>{if(!selected)return;if(selected===t.w){c.classList.add('correct');c.innerHTML+=`<span class="word">${t.w}</span>`;[...$('#bank').children].find(x=>x.textContent===t.w)?.remove();count++;add(10);beep();speak(`Great! ${t.w}.`);selected=null;if(count===8)setTimeout(()=>finish('You matched all 8 toy words!'),500)}else{c.classList.add('wrong');beep(false);setTimeout(()=>c.classList.remove('wrong'),400)}};$('#pics').appendChild(c)})}
-function listen(){let q=0,score=0;$('#stageArea').innerHTML='<div class="panel listen"><p class="instruction">Listen and choose the correct picture.</p><button id="listenBtn">🔊</button><div id="q" class="question"></div><div id="opts" class="grid"></div></div>';function next(){if(q===8)return finish(`You got ${score} out of 8 correct!`);const target=toys[q],opts=shuffle([target,...shuffle(toys.filter(x=>x.w!==target.w)).slice(0,3)]);$('#q').textContent=`Question ${q+1} / 8`;$('#opts').innerHTML='';opts.forEach(t=>{const b=document.createElement('button');b.className='toy';b.innerHTML=`<span class="emoji">${t.e}</span>`;b.onclick=()=>{if(t.w===target.w){score++;add(10);beep();speak(`Correct! ${target.w}.`);q++;setTimeout(next,600)}else{b.classList.add('wrong');beep(false);setTimeout(()=>b.classList.remove('wrong'),400)}};$('#opts').appendChild(b)});setTimeout(()=>speak(`Pick ${target.w}.`),250)}$('#listenBtn').onclick=()=>speak(`Pick ${toys[q].w}.`);next()}
-function read(){const clues=[['It is soft. I hug it.','teddy bear'],['It has wheels. I push it.','car'],['I can fly it in the sky.','kite'],['I can build with it.','puzzle'],['I play with it in the park.','ball']];let q=0;$('#stageArea').innerHTML='<div class="panel"><p class="instruction">Read the clue and choose the toy.</p><div id="readBox"></div></div>';function next(){if(q===clues.length)return finish('You solved all reading clues!');const [clue,ans]=clues[q],target=toys.find(t=>t.w===ans),opts=shuffle([target,...shuffle(toys.filter(t=>t.w!==ans)).slice(0,3)]);$('#readBox').innerHTML=`<div class="clue">${q+1}. ${clue}</div><div id="readGrid" class="grid"></div>`;opts.forEach(t=>{const b=document.createElement('button');b.className='toy';b.innerHTML=`<span class="emoji">${t.e}</span><span class="word">${t.w}</span>`;b.onclick=()=>{if(t.w===ans){add(15);beep();speak(`Correct! It is a ${ans}.`);q++;setTimeout(next,600)}else{b.classList.add('wrong');beep(false);setTimeout(()=>b.classList.remove('wrong'),400)}};$('#readGrid').appendChild(b)})}next()}
-function grammar(){const qs=[['teddy bear','This is'],['robot','That is'],['ball','This is'],['train','That is']];let q=0;$('#stageArea').innerHTML='<div class="panel"><p class="instruction">Choose “This is ...” or “That is ...”</p><div id="gram"></div></div>';function next(){if(q===qs.length)return finish('Grammar mission complete!');const [w,ans]=qs[q],t=toys.find(x=>x.w===w);$('#gram').innerHTML=`<div class="question">${t.e}<br>_____ a ${w}.</div><div class="choices"><button>This is</button><button>That is</button></div>`;document.querySelectorAll('.choices button').forEach(b=>b.onclick=()=>{if(b.textContent===ans){add(15);beep();speak(`${ans} a ${w}.`);q++;setTimeout(next,600)}else{beep(false)}})}next()}
-function speakStage(){let q=0;$('#stageArea').innerHTML='<div class="panel speech"><p class="instruction">Listen, then speak.</p><div id="speakBox"></div></div>';function next(){if(q===4)return finish('You practised 4 speaking sentences!');const t=toys[q*2],line=q%2===0?`What is this? It is a ${t.w}.`:`What is that? It is a ${t.w}.`;$('#speakBox').innerHTML=`<div class="emoji">${t.e}</div><div class="model">${line}</div><div class="actions"><button id="modelBtn">🔊 Listen</button><button id="micBtn" class="mic">🎤</button><button id="saidBtn">✅ I said it!</button></div><div id="heard"></div>`;$('#modelBtn').onclick=()=>speak(line);$('#saidBtn').onclick=()=>{add(15);beep();q++;setTimeout(next,300)};$('#micBtn').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){$('#heard').textContent='Say the sentence, then tap “I said it!”';return}const r=new SR();r.lang='en-US';$('#heard').textContent='Listening...';r.onresult=e=>$('#heard').textContent=`You said: ${e.results[0][0].transcript}`;r.start()};setTimeout(()=>speak(line),300)}next()}
-function create(){ $('#stageArea').innerHTML='<div class="panel"><p class="instruction">Draw your favorite toy and write 2 sentences.</p><div class="draw"><canvas id="canvas" width="900" height="600"></canvas><div class="tools"><input placeholder="My favorite toy is..."><textarea rows="3" placeholder="1. It is..."></textarea><textarea rows="3" placeholder="2. I can..."></textarea><div class="actions"><button id="black">✏️ Pencil</button><button id="pink">🖍️ Crayon</button><button id="clear">🧽 Clear</button></div><div class="stars"><p>I can say the toy words.</p><button>☆</button><button>☆</button><button>☆</button></div><button id="finishCreate" class="primary big">✅ Finish My Work</button></div></div></div>';const c=$('#canvas'),ctx=c.getContext('2d');let d=false;ctx.lineWidth=8;ctx.lineCap='round';ctx.strokeStyle='#222';const p=e=>{const r=c.getBoundingClientRect(),t=e.touches?.[0]||e;return{x:(t.clientX-r.left)*c.width/r.width,y:(t.clientY-r.top)*c.height/r.height}};const st=e=>{d=true;const a=p(e);ctx.beginPath();ctx.moveTo(a.x,a.y);e.preventDefault()};const mv=e=>{if(!d)return;const a=p(e);ctx.lineTo(a.x,a.y);ctx.stroke();e.preventDefault()};c.addEventListener('mousedown',st);c.addEventListener('mousemove',mv);window.addEventListener('mouseup',()=>d=false);c.addEventListener('touchstart',st,{passive:false});c.addEventListener('touchmove',mv,{passive:false});c.addEventListener('touchend',()=>d=false);$('#black').onclick=()=>ctx.strokeStyle='#222';$('#pink').onclick=()=>ctx.strokeStyle='#ef4e8d';$('#clear').onclick=()=>ctx.clearRect(0,0,c.width,c.height);document.querySelectorAll('.stars button').forEach((b,i,a)=>b.onclick=()=>a.forEach((x,j)=>x.textContent=j<=i?'⭐':'☆'));$('#finishCreate').onclick=()=>{add(20);finish('Wonderful drawing and writing!')}}
+const $=s=>document.querySelector(s);
+const home=$("#homeScreen"),menu=$("#menuScreen"),game=$("#gameScreen"),stageArea=$("#stageArea");
+const toys=[
+ {w:"teddy bear",th:"ตุ๊กตาหมี",img:"assets/teddy-bear.jpg"},
+ {w:"car",th:"รถของเล่น",img:"assets/car.jpg"},
+ {w:"doll",th:"ตุ๊กตา",img:"assets/doll.jpg"},
+ {w:"robot",th:"หุ่นยนต์",img:"assets/robot.jpg"},
+ {w:"puzzle",th:"เกมต่อภาพ",img:"assets/puzzle.jpg"},
+ {w:"ball",th:"ลูกบอล",img:"assets/ball.jpg"},
+ {w:"train",th:"รถไฟของเล่น",img:"assets/train.jpg"},
+ {w:"kite",th:"ว่าว",img:"assets/kite.jpg"}
+];
+const stages=["speaking","listening","reading","writing"];
+let completed=new Set(),totalScore=0,stageScore=0,currentStage="speaking";
+
+$("#startBtn").onclick=showMenu;
+$("#menuHomeBtn").onclick=()=>show(home);
+$("#backBtn").onclick=()=>show(menu);
+$("#menuBtn").onclick=()=>{$("#resultDialog").close();showMenu();};
+$("#nextBtn").onclick=()=>{
+  $("#resultDialog").close();
+  const i=stages.indexOf(currentStage);
+  if(i<stages.length-1)startStage(stages[i+1]);else showMenu();
+};
+document.querySelectorAll(".mission-card").forEach(b=>b.onclick=()=>startStage(b.dataset.stage));
+
+function show(s){[home,menu,game].forEach(x=>x.classList.remove("active"));s.classList.add("active")}
+function showMenu(){
+  $("#playerName").textContent=$("#studentName").value.trim()||"Player";
+  $("#totalScore").textContent=totalScore;
+  stages.forEach(s=>{$(`#status-${s}`).textContent=completed.has(s)?"✓ Complete":"Start"});
+  $("#progressBar").style.width=`${completed.size*25}%`;
+  $("#progressText").textContent=`${completed.size} / 4 missions`;
+  show(menu);
+}
+function startStage(stage){
+  currentStage=stage;stageScore=0;$("#stageScore").textContent=0;
+  const labels={
+    speaking:["Speaking","ฟังและออกเสียงตาม"],
+    listening:["Listening","ฟังประโยคแล้วเลือกภาพ"],
+    reading:["Reading","อ่านเรื่องสั้นพร้อมคำอธิบายภาษาไทย"],
+    writing:["Writing","เติมคำศัพท์ที่ขาดหายไป"]
+  };
+  $("#stageTitle").textContent=labels[stage][0];$("#stageThai").textContent=labels[stage][1];
+  show(game);
+  ({speaking:renderSpeaking,listening:renderListening,reading:renderReading,writing:renderWriting})[stage]();
+}
+function addScore(n){stageScore+=n;totalScore+=n;$("#stageScore").textContent=stageScore}
+function finishStage(text){
+  completed.add(currentStage);$("#resultText").textContent=text;$("#resultDialog").showModal();
+}
+function speak(text,rate=.8){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate;u.pitch=1.05;speechSynthesis.speak(u);
+}
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function sound(ok=true){
+  const ac=window._ac||(window._ac=new (window.AudioContext||window.webkitAudioContext)());
+  const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);
+  o.frequency.value=ok?740:180;o.type=ok?"sine":"sawtooth";g.gain.value=.12;o.start();
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.25);o.stop(ac.currentTime+.25);
+}
+
+function renderSpeaking(){
+  let index=0,done=0;
+  stageArea.innerHTML=`<div class="game-panel"><p class="instruction">Listen to each word and repeat.</p><p class="subinstruction">ฟังระบบออกเสียง แล้วให้นักเรียนออกเสียงตามจนครบ 8 คำ</p><div id="speakContent"></div><div class="speaking-progress" id="speakProgress"></div></div>`;
+  toys.forEach((_,i)=>{$("#speakProgress").innerHTML+=`<span id="dot${i}">${i+1}</span>`});
+  function showWord(){
+    if(index>=toys.length){finishStage(`You practised all ${toys.length} toy words!`);return}
+    const t=toys[index];
+    $("#speakContent").innerHTML=`<div class="toy-focus"><div class="counter">Word ${index+1} / ${toys.length}</div><img class="toy-photo" src="${t.img}" alt="${t.w}"><h2 class="big-word">${t.w}</h2><div class="thai-word">${t.th}</div>
+      <div class="action-row"><button id="listenWord" class="listen-main">🔊 Listen</button><button id="recordWord" class="speak-main">🎤 Speak</button><button id="saidIt">✅ I said it</button></div><div id="micResult" class="mic-result">Listen first, then repeat.</div></div>`;
+    $("#listenWord").onclick=()=>speak(t.w,.7);
+    $("#recordWord").onclick=()=>recognize(t.w);
+    $("#saidIt").onclick=completeWord;
+    setTimeout(()=>speak(t.w,.7),350);
+  }
+  function recognize(target){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){$("#micResult").textContent="ไมโครโฟนตรวจเสียงไม่รองรับ กรุณาพูดตามแล้วกด I said it";return}
+    const r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;
+    $("#micResult").textContent="Listening...";
+    r.onresult=e=>{
+      const heard=e.results[0][0].transcript.toLowerCase();
+      $("#micResult").textContent=`You said: ${heard}`;
+      if(heard.includes(target.split(" ")[0])){sound(true);setTimeout(completeWord,500)}
+      else{sound(false);$("#micResult").textContent+=` — Try again: ${target}`;}
+    };
+    r.onerror=()=>$("#micResult").textContent="Please try again.";
+    r.start();
+  }
+  function completeWord(){
+    $(`#dot${index}`).classList.add("done");addScore(10);sound(true);done++;index++;setTimeout(showWord,250);
+  }
+  showWord();
+}
+
+function renderListening(){
+  let index=0,correct=0;
+  stageArea.innerHTML=`<div class="game-panel listen-question"><p class="instruction">Listen to the sentence and choose the correct cartoon picture.</p><p class="subinstruction">ตัวอย่าง: “This is a teddy bear.” แล้วเลือกภาพให้ถูกต้อง</p><button id="playSentence" class="listen-main">🔊 Play Sentence</button><div class="sentence-box" id="sentenceBox">Listen carefully.</div><div class="picture-grid" id="listenGrid"></div></div>`;
+  function next(){
+    if(index>=toys.length){finishStage(`You matched ${correct} listening sentences!`);return}
+    const target=toys[index],opts=shuffled([target,...shuffled(toys.filter(t=>t.w!==target.w)).slice(0,3)]);
+    $("#sentenceBox").textContent=`Question ${index+1} / ${toys.length}`;
+    $("#listenGrid").innerHTML="";
+    opts.forEach(t=>{
+      const b=document.createElement("button");b.className="picture-card";b.innerHTML=`<img src="${t.img}" alt="${t.w}"><b>${t.w}</b>`;
+      b.onclick=()=>{
+        if(t.w===target.w){b.classList.add("correct");correct++;addScore(10);sound(true);speak(`Correct. This is a ${target.w}.`);index++;setTimeout(next,700)}
+        else{b.classList.add("wrong");sound(false);speak("Try again.");setTimeout(()=>b.classList.remove("wrong"),450)}
+      };
+      $("#listenGrid").appendChild(b);
+    });
+    setTimeout(()=>speak(`This is a ${target.w}.`),350);
+  }
+  $("#playSentence").onclick=()=>speak(`This is a ${toys[index]?.w}.`);
+  next();
+}
+
+function renderReading(){
+  const story=[
+    {en:"Mina has a big toy box.",th:"มีนามีกล่องของเล่นใบใหญ่"},
+    {en:"There is a teddy bear and a doll in the box.",th:"ในกล่องมีตุ๊กตาหมีและตุ๊กตา"},
+    {en:"She plays with the ball in the park.",th:"เธอเล่นลูกบอลในสวนสาธารณะ"},
+    {en:"Her brother likes the robot and the train.",th:"น้องชายของเธอชอบหุ่นยนต์และรถไฟของเล่น"},
+    {en:"They put all the toys back in the box.",th:"พวกเขาเก็บของเล่นทั้งหมดกลับเข้าไปในกล่อง"}
+  ];
+  let current=0;
+  stageArea.innerHTML=`<div class="game-panel"><p class="instruction">Read the short story with the system.</p><p class="subinstruction">กดฟังทีละประโยค พร้อมอ่านคำอธิบายภาษาไทย</p>
+    <div class="story-card"><img class="story-image" src="assets/toys-worksheet.png" alt="Toy story"><div><div class="story-lines" id="storyLines"></div>
+    <div class="story-controls"><button id="readAll">🔊 Read All</button><button id="readCurrent">▶ Read This Sentence</button><button id="nextLine">Next Sentence</button><button id="finishReading" class="primary">✅ I finished reading</button></div></div></div></div>`;
+  const box=$("#storyLines");
+  story.forEach((s,i)=>box.innerHTML+=`<div class="story-line" id="line${i}"><div class="english">${i+1}. ${s.en}</div><div class="thai">${s.th}</div></div>`);
+  function highlight(){document.querySelectorAll(".story-line").forEach((x,i)=>x.classList.toggle("active",i===current))}
+  highlight();
+  $("#readCurrent").onclick=()=>{highlight();speak(story[current].en,.72)};
+  $("#nextLine").onclick=()=>{current=Math.min(story.length-1,current+1);highlight();speak(story[current].en,.72)};
+  $("#readAll").onclick=async()=>{
+    for(let i=0;i<story.length;i++){current=i;highlight();speak(story[i].en,.72);await new Promise(r=>setTimeout(r,3000))}
+  };
+  $("#finishReading").onclick=()=>{addScore(40);finishStage("You read the story and understood all 5 sentences!")};
+}
+
+function renderWriting(){
+  const questions=[
+    {img:"assets/teddy-bear.jpg",sentence:"This is a _____.",answer:"teddy bear"},
+    {img:"assets/robot.jpg",sentence:"I have a _____.",answer:"robot"},
+    {img:"assets/ball.jpg",sentence:"The _____ is round.",answer:"ball"},
+    {img:"assets/train.jpg",sentence:"This _____ has many cars.",answer:"train"},
+    {img:"assets/kite.jpg",sentence:"I can fly a _____.",answer:"kite"},
+    {img:"assets/puzzle.jpg",sentence:"I can play with a _____.",answer:"puzzle"}
+  ];
+  stageArea.innerHTML=`<div class="game-panel"><p class="instruction">Complete the missing words.</p><p class="subinstruction">เติมคำศัพท์ที่ขาดหายไปให้ถูกต้อง</p>
+    <div class="word-bank">${shuffled(questions.map(q=>q.answer)).map(w=>`<span>${w}</span>`).join("")}</div><div class="writing-list" id="writingList"></div><button id="checkWriting" class="submit-btn">Check Answers</button></div>`;
+  const list=$("#writingList");
+  questions.forEach((q,i)=>{
+    const parts=q.sentence.split("_____");
+    list.innerHTML+=`<div class="writing-item" id="writeItem${i}"><img src="${q.img}" alt="${q.answer}"><div><div class="sentence-fill">${i+1}. ${parts[0]}<input id="answer${i}" autocomplete="off">${parts[1]}</div><div class="feedback" id="feedback${i}"></div></div></div>`;
+  });
+  $("#checkWriting").onclick=()=>{
+    let correct=0;
+    questions.forEach((q,i)=>{
+      const value=$(`#answer${i}`).value.trim().toLowerCase(),item=$(`#writeItem${i}`),fb=$(`#feedback${i}`);
+      item.classList.remove("correct","wrong");
+      if(value===q.answer){correct++;item.classList.add("correct");fb.textContent="✓ Correct!";fb.style.color="#167437"}
+      else{item.classList.add("wrong");fb.textContent=`Try again. Hint: ${q.answer[0]}...`;fb.style.color="#b51e36"}
+    });
+    if(correct===questions.length){addScore(60);sound(true);finishStage("Excellent! You completed every missing word correctly.")}
+    else{sound(false);speak(`You have ${correct} correct answers. Please try again.`)}
+  };
+}
